@@ -119,19 +119,18 @@ namespace K12.Club.General
             //取得學校內所有一般生記錄
             //班級/座號/學號/姓名
             //(沒有班級之學生,不列入記錄
-            DataTable studentDT = _QueryHelper.Select("select student.id,class.class_name,student.seat_no,student.student_number,student.name,class.grade_year from student join class on student.ref_class_id=class.id where student.status=1 ORDER BY class.grade_year,class.class_name,student.seat_no");
+            DataTable studentDT = _QueryHelper.Select("select student.id,class.class_name,student.seat_no,student.student_number,student.name,class.grade_year from student join class on student.ref_class_id=class.id where student.status=1 or student.status=2 ORDER BY class.grade_year,class.class_name,student.seat_no");
 
             IsStudentList.Clear();
+            List<StudRecord> sTUDlIST = new List<StudRecord>();
             foreach (DataRow row in studentDT.Rows)
             {
                 StudRecord re = new StudRecord(row);
-                //依據社團參與記錄進行資料篩選
                 if (!StudentScjoinDic.ContainsKey(re.id))
                 {
                     IsStudentList.Add(re);
                 }
             }
-
         }
 
         void BGW_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)

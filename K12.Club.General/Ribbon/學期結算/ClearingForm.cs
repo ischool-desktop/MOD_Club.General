@@ -189,11 +189,9 @@ namespace K12.Club.General
                             rsr.RefSCJoinID = scj.UID; //參與記錄ID
 
                             rsr.ClubName = cr.ClubName;
-                            bool check = false;
 
                             if (!string.IsNullOrEmpty(scj.Score))
                             {
-                                check = true;
                                 rsr.ResultScore = tool.GetDecimalValue(scj); //成績
                             }
 
@@ -202,7 +200,6 @@ namespace K12.Club.General
                             {
                                 if (CadreDic[cr.UID]._Cadre1.ContainsKey(sr.ID))
                                 {
-                                    check = true;
                                     rsr.CadreName = CadreDic[cr.UID]._Cadre1[sr.ID]; //幹部
                                 }
                                 else
@@ -212,10 +209,8 @@ namespace K12.Club.General
                             }
                             #endregion
 
-                            if (check)
-                            {
-                                InsertScoreList.Add(rsr);
-                            }
+                             InsertScoreList.Add(rsr);
+                            
                         }
                     }
                 }
@@ -311,7 +306,7 @@ namespace K12.Club.General
 
             if (e.Cancelled)
             {
-                FISCA.Presentation.Controls.MsgBox.Show("結算操作已因錯誤中止!!");
+                 FISCA.Presentation.Controls.MsgBox.Show("結算操作已中止!");
             }
             else
             {

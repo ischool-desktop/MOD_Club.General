@@ -11,6 +11,7 @@ using System.Windows.Forms;
 using K12.Data;
 using K12.Data.Configuration;
 using Campus.DocumentValidator;
+using Campus.IRewrite.Interface;
 
 namespace K12.Club.General
 {
@@ -19,7 +20,7 @@ namespace K12.Club.General
         [MainMethod()]
         static public void Main()
         {
-            ServerModule.AutoManaged("https://module.ischool.com.tw/module/138/Club_Universal/udm.xml");
+            ServerModule.AutoManaged("http://module.ischool.com.tw/module/138/Club_Universal/udm.xml");
 
             //FISCA.RTOut.WriteLine("註冊Gadget - 參加社團(學生)：" + WebPackage.RegisterGadget("Student", "fd56eafc-3601-40a0-82d9-808f72a8272b", "參加社團(學生)").Item2);
             //FISCA.RTOut.WriteLine("註冊Gadget - 社團(老師)：" + WebPackage.RegisterGadget("Teacher", "6080a7c0-60e7-443c-bad7-ecccb3a86bcf", "社團(老師)").Item2);
@@ -77,10 +78,23 @@ namespace K12.Club.General
             if (UserPermission.Editable || UserPermission.Viewable)
                 ClubAdmin.Instance.AddDetailBulider(new FISCA.Presentation.DetailBulider<ClubImageItem>());
 
-            //社團基本資料
+            #region 社團基本資料
+
             UserPermission = FISCA.Permission.UserAcl.Current[Permissions.社團基本資料];
             if (UserPermission.Editable || UserPermission.Viewable)
-                ClubAdmin.Instance.AddDetailBulider(new FISCA.Presentation.DetailBulider<ClubDetailItem>());
+            {
+                IClubDetailItemAPI itemB = FISCA.InteractionService.DiscoverAPI<IClubDetailItemAPI>();
+                if (itemB != null)
+                {
+                    ClubAdmin.Instance.AddDetailBulider(itemB.CreateBasicInfo());
+                }
+                else
+                {
+                    ClubAdmin.Instance.AddDetailBulider(new FISCA.Presentation.DetailBulider<ClubDetailItem>());
+                }
+            }
+
+            #endregion
 
             //社團限制
             UserPermission = FISCA.Permission.UserAcl.Current[Permissions.社團限制];
@@ -95,7 +109,7 @@ namespace K12.Club.General
             //社團幹部
             UserPermission = FISCA.Permission.UserAcl.Current[Permissions.社團幹部];
             if (UserPermission.Editable || UserPermission.Viewable)
-                ClubAdmin.Instance.AddDetailBulider(new FISCA.Presentation.DetailBulider<CadresItem>()); 
+                ClubAdmin.Instance.AddDetailBulider(new FISCA.Presentation.DetailBulider<CadresItem>());
 
             #endregion
 
@@ -127,7 +141,7 @@ namespace K12.Club.General
             edit["刪除社團"].Click += delegate
             {
                 DeleteClub();
-            }; 
+            };
 
             #endregion
 
@@ -182,7 +196,7 @@ namespace K12.Club.General
                 ExportStudentV2 wizard = new ExportStudentV2(exporter.Text, exporter.Image);
                 exporter.InitializeExport(wizard);
                 wizard.ShowDialog();
-            }; 
+            };
 
             #endregion
 
@@ -239,7 +253,7 @@ namespace K12.Club.General
             {
                 ClassClubTranscript insert = new ClassClubTranscript();
                 insert.ShowDialog();
-            }; 
+            };
 
             #endregion
 
@@ -309,8 +323,16 @@ namespace K12.Club.General
             Results["學期結算"].Enable = false;
             Results["學期結算"].Click += delegate
             {
-                ClearingForm insert = new ClearingForm();
-                insert.ShowDialog();
+                IClubClearingFormAPI itemK = FISCA.InteractionService.DiscoverAPI<IClubClearingFormAPI>();
+                if (itemK != null)
+                {
+                    itemK.CreateBasicForm().ShowDialog();
+                }
+                else
+                {
+                    ClearingForm insert = new ClearingForm();
+                    insert.ShowDialog();
+                }
             };
 
             RibbonBarItem oder = ClubAdmin.Instance.RibbonBarItems["其它"];

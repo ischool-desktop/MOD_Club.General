@@ -38,7 +38,7 @@
             this.btnInserStudent = new DevComponents.DotNetBar.ButtonX();
             this.buttonItem2 = new DevComponents.DotNetBar.ButtonItem();
             this.lbCourseCount = new DevComponents.DotNetBar.LabelX();
-            this.listViewEx1 = new K12.Club.General.ListViewEX();
+            this.listViewEx1 = new ListViewEX();
             this.chGen_ = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.chStatus = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.chLock = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));

@@ -152,24 +152,18 @@ namespace K12.Club.General
                 {
                     if (_PrintLost)
                     {
-                        if (obj.RSR != null)
+                        if (obj.RSR != null) //有結算記錄(不管是否有社團記錄)
                         {
-                            if (obj.RSR.ResultScore.HasValue)
+                            if (obj.RSR.ResultScore.HasValue) //有成績
                             {
-                                if (obj.RSR.ResultScore.Value < 60) //當成績低於60分才加入清單內
+                                if (obj.RSR.ResultScore.Value > 60) //當成績低於60分才加入清單內
                                 {
-                                    dic[cr.ID].Add(obj);
+                                    continue;
                                 }
                             }
                         }
-                        else if (obj.RSR == null && obj.SCJoin != null) //有修社團,卻無結算分數
-                        {
-                            dic[cr.ID].Add(obj);
-                        }
-                        else if (obj.RSR == null && obj.SCJoin == null) //沒社團,也無結算分數
-                        {
-                            dic[cr.ID].Add(obj);
-                        }
+
+                        dic[cr.ID].Add(obj);
                     }
                     else
                     {

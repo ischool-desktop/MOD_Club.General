@@ -90,6 +90,7 @@ namespace K12.Club.General
             }
 
             BindData();
+
         }
 
         /// <summary>
@@ -187,13 +188,11 @@ namespace K12.Club.General
                     //rsr.RefSCJoinID = scj.UID; //參與記錄ID
 
                     rsr.ClubName = "" + row.Cells[2].Value;
-
                     decimal xy;
                     if (decimal.TryParse("" + row.Cells[3].Value, out xy))
                     {
                         rsr.ResultScore = xy; //成績              
                     }
-
                     rsr.CadreName = "" + row.Cells[4].Value; //幹部
 
                     InsertList.Add(rsr);
@@ -206,9 +205,20 @@ namespace K12.Club.General
 
                     rsr.ClubName = "" + row.Cells[2].Value;
                     decimal xy;
-                    if (decimal.TryParse("" + row.Cells[3].Value, out xy))
+                    if (!string.IsNullOrEmpty("" + row.Cells[3].Value))
                     {
-                        rsr.ResultScore = xy; //成績              
+                        if (decimal.TryParse("" + row.Cells[3].Value, out xy))
+                        {
+                            rsr.ResultScore = xy; //成績              
+                        }
+                        else
+                        {
+                            rsr.ResultScore = null;
+                        }
+                    }
+                    else
+                    {
+                        rsr.ResultScore = null;
                     }
                     rsr.CadreName = "" + row.Cells[4].Value; //幹部
 
@@ -336,14 +346,21 @@ namespace K12.Club.General
             }
             else if (dataGridViewX1.CurrentCell.ColumnIndex == Column4.Index)
             {
-                decimal schoolyear;
-                if (decimal.TryParse("" + CurrentCell.Value, out schoolyear))
+                decimal sore;
+                if (!string.IsNullOrEmpty("" + CurrentCell.Value))
                 {
-                    CurrentCell.ErrorText = "";
+                    if (decimal.TryParse("" + CurrentCell.Value, out sore))
+                    {
+                        CurrentCell.ErrorText = "";
+                    }
+                    else
+                    {
+                        CurrentCell.ErrorText = "必須是數字!";
+                    }
                 }
                 else
                 {
-                    CurrentCell.ErrorText = "必須是數字!";
+                    CurrentCell.ErrorText = "";
                 }
             }
 

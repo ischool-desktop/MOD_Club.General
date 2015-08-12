@@ -33,6 +33,8 @@ namespace K12.Club.General
 
         public Dictionary<string, StudentRecord> StudentDic = new Dictionary<string, StudentRecord>();
 
+        public Dictionary<string, StudentRecord> StudentAllDic = new Dictionary<string, StudentRecord>();
+
         public List<string> SCJoin_Lock = new List<string>();
 
         /// <summary>
@@ -95,6 +97,12 @@ namespace K12.Club.General
                         StudentDic.Add(each.ID, each);
                     }
                 }
+
+                if (!StudentAllDic.ContainsKey(each.ID))
+                {
+                    StudentAllDic.Add(each.ID, each);
+                }
+
             }
             //排序
             SCJoinStudent_LIst = SortClassIndex.K12Data_StudentRecord(SCJoinStudent_LIst);

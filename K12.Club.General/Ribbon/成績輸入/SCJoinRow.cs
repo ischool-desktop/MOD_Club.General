@@ -70,6 +70,25 @@ namespace K12.Club.General
             }
         }
 
+        /// <summary>
+        /// 年級
+        /// </summary>
+        public string ClassGradeYear
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(student.RefClassID))
+                    if (Class.SelectByID(student.RefClassID).GradeYear.HasValue)
+                        return Class.SelectByID(student.RefClassID).GradeYear.Value.ToString();
+                    else
+                        return "";
+                else
+                    return "";
+            }
+        }
+
+        public string SortString { get; set; }
+
 
         /// <summary>
         /// 班級名稱

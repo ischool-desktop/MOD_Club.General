@@ -14,6 +14,8 @@ using FISCA.UDT;
 using K12.Data;
 using System.Xml;
 using System.Diagnostics;
+using FISCA.Data;
+using System.Xml.Linq;
 
 namespace K12.Club.General
 {
@@ -26,24 +28,92 @@ namespace K12.Club.General
 
         BackgroundWorker BGW = new BackgroundWorker();
 
-        int 學生多少個 = 150;
+        int 學生多少個 = 0;
         int 日期多少天 = 30;
+
+        // 2018/01/02 羿均 新增日期設定檔
+        K12.Data.Configuration.ConfigData DateSetting = K12.Data.School.Configuration["DateSetting"];
 
         public ClubPointsListForm()
         {
             InitializeComponent();
-
+            DateSetting.Save();
         }
-
+        Campus.Configuration.ConfigData configData = Campus.Configuration.Config.User["DateSetting"];
         private void ClubPointsListForm_Load(object sender, EventArgs e)
         {
             BGW.DoWork += new DoWorkEventHandler(BGW_DoWork);
             BGW.RunWorkerCompleted += new RunWorkerCompletedEventHandler(BGW_RunWorkerCompleted);
+            // 如果沒日期設定資料 
+            // DateTimeInput 預設為當天
+            // CheckBox 預設為勾選
+            if (string.IsNullOrEmpty(DateSetting["DateSetting"]))
+            {
+                dateTimeInput1.Value = DateTime.Today;
+                dateTimeInput2.Value = DateTime.Today.AddDays(6);
 
-            dateTimeInput1.Value = DateTime.Today;
-            dateTimeInput2.Value = DateTime.Today.AddDays(6);
+                GetDateTime_Click(null, null);
+                // 紀錄日期清單資料
+                string node = "";
+                foreach (DataGridViewRow dr in dataGridViewX1.Rows)
+                {
+                    node += "<Dgv date = \"" + dr.Cells["Column1"].Value + "\" week = \"" + dr.Cells["column2"].Value + "\"></Dgv>";
+                }
 
-            GetDateTime_Click(null, null);
+                DateSetting["DateSetting"] = string.Format(@"<DateSetting><Weeks><Week name = ""Monday"" checked = ""true""/><Week name = ""Tuesday"" checked = ""true"" /><Week name = ""Wednesday"" checked = ""true"" /><Week name = ""Thursday"" checked = ""true"" /><Week name = ""Friday"" checked = ""true"" /></Weeks><StarDate Date = ""{0}"" ></StarDate><EndDate Date = ""{1}"" ></EndDate><DataGridView>{2}</DataGridView></DateSetting>"
+                , DateTime.Today, DateTime.Today.AddDays(6), node);
+                DateSetting.Save();
+                return;
+            }
+            // 如果有日期設定資料
+            if (DateSetting.Contains("DateSetting") && !string.IsNullOrEmpty(DateSetting["DateSetting"]))
+            {
+                XmlElement _DateSetting = K12.Data.XmlHelper.LoadXml(DateSetting["DateSetting"]);
+                XDocument _dateSetting = XDocument.Parse(_DateSetting.OuterXml);
+                // Init DateTimeInput
+                DateTime StarDate = DateTime.Parse(_dateSetting.Element("DateSetting").Element("StarDate").Attribute("Date").Value);
+                DateTime EndDate = DateTime.Parse(_dateSetting.Element("DateSetting").Element("EndDate").Attribute("Date").Value);
+                dateTimeInput1.Value = StarDate;
+                dateTimeInput2.Value = EndDate;
+                // Init CheckBox
+                List<XElement> Weeks = _dateSetting.Element("DateSetting").Element("Weeks").Elements("Week").ToList();
+                foreach (XElement week in Weeks)
+                {
+                    if (week.Attribute("name").Value == "Monday")
+                    {
+                        cbDay1.Checked = bool.Parse(week.Attribute("checked").Value);
+                    }
+                    if (week.Attribute("name").Value == "Tuesday")
+                    {
+                        cbDay2.Checked = bool.Parse(week.Attribute("checked").Value);
+                    }
+                    if (week.Attribute("name").Value == "Wednesday")
+                    {
+                        cbDay3.Checked = bool.Parse(week.Attribute("checked").Value);
+                    }
+                    if (week.Attribute("name").Value == "Thursday")
+                    {
+                        cbDay4.Checked = bool.Parse(week.Attribute("checked").Value);
+                    }
+                    if (week.Attribute("name").Value == "Friday")
+                    {
+                        cbDay5.Checked = bool.Parse(week.Attribute("checked").Value);
+                    }
+                }
+                // Init DataGridView
+                List<XElement> Dgv = _dateSetting.Element("DateSetting").Element("DataGridView").Elements("Dgv").ToList();
+                foreach (XElement dgvr in Dgv)
+                {
+                    DataGridViewRow dr = new DataGridViewRow();
+                    dr.CreateCells(dataGridViewX1);
+
+                    dr.Cells[0].Value = dgvr.Attribute("date").Value;
+                    dr.Cells[1].Value = dgvr.Attribute("week").Value;
+
+                    dataGridViewX1.Rows.Add(dr);
+                }
+
+            }
         }
 
         private void btnSave_Click(object sender, EventArgs e)
@@ -81,6 +151,19 @@ namespace K12.Club.General
             btnSave.Enabled = false;
             BGW.RunWorkerAsync(dxXml.BaseElement);
 
+            // 儲存日期設定
+            // 讀取日期清單資料
+            string node = "";
+            foreach (DataGridViewRow dr in dataGridViewX1.Rows)
+            {
+                node += "<Dgv date = \"" + dr.Cells["Column1"].Value + "\" week = \"" + dr.Cells["column2"].Value + "\"></Dgv>";
+            }
+
+            string settingData = string.Format(@"<DateSetting><Weeks><Week name = ""Monday"" checked = ""{0}""/><Week name = ""Tuesday"" checked = ""{1}"" /><Week name = ""Wednesday"" checked = ""{2}"" /><Week name = ""Thursday"" checked = ""{3}"" /><Week name = ""Friday"" checked = ""{4}"" /></Weeks><StarDate Date = ""{5}"" ></StarDate><EndDate Date = ""{6}"" ></EndDate><DataGridView>{7}</DataGridView></DateSetting>"
+            , cbDay1.Checked, cbDay2.Checked, cbDay3.Checked, cbDay4.Checked, cbDay5.Checked, dateTimeInput1.Value, dateTimeInput2.Value, node);
+
+            DateSetting["DateSetting"] = settingData;
+            DateSetting.Save();
         }
 
         void BGW_DoWork(object sender, DoWorkEventArgs e)
@@ -101,6 +184,20 @@ namespace K12.Club.General
                 //如果已有範本,則取得樣板
                 Template = ConfigurationInCadre.Template.ToDocument();
             }
+
+            string[] fieldNames = Template.MailMerge.GetFieldNames();
+
+            foreach (var item in fieldNames)
+            {
+                if (item.Contains("姓名"))
+                {
+                    學生多少個++;
+                }
+
+
+            }
+
+
 
             SCJoinDataLoad crM = new SCJoinDataLoad();
 
@@ -134,6 +231,7 @@ namespace K12.Club.General
 
             table.Columns.Add("上課地點");
             table.Columns.Add("社團類型");
+            table.Columns.Add("社團代碼"); //2016/9/22 - 新增
             table.Columns.Add("指導老師1");
             table.Columns.Add("指導老師2");
             table.Columns.Add("指導老師3");
@@ -178,6 +276,7 @@ namespace K12.Club.General
                 //社團資料
                 CLUBRecord cr = crM.CLUBRecordDic[each];
 
+                #region row 各種基本資料
                 DataRow row = table.NewRow();
                 row["學校名稱"] = K12.Data.School.ChineseName;
                 row["社團名稱"] = cr.ClubName;
@@ -186,6 +285,8 @@ namespace K12.Club.General
 
                 row["上課地點"] = cr.Location;
                 row["社團類型"] = cr.ClubCategory;
+                row["社團代碼"] = cr.ClubNumber;
+
                 if (crM.TeacherDic.ContainsKey(cr.RefTeacherID))
                 {
                     row["指導老師1"] = crM.TeacherDic[cr.RefTeacherID].Name;
@@ -210,6 +311,7 @@ namespace K12.Club.General
                 {
                     row[string.Format("日期_{0}", x)] = config[x - 1];
                 }
+                #endregion
 
                 int y = 1;
                 foreach (StudentRecord obj in crM.ClubByStudentList[each])
@@ -222,10 +324,53 @@ namespace K12.Club.General
                         row[string.Format("學號_{0}", y)] = obj.StudentNumber;
                         row[string.Format("性別_{0}", y)] = obj.Gender;
                         y++;
+
+                        if (y == (學生多少個 + 1))
+                        {
+                            y = 1;
+                            table.Rows.Add(row);
+                            row = table.NewRow();
+                            #region row 各種基本資料
+                            row["學校名稱"] = K12.Data.School.ChineseName;
+                            row["社團名稱"] = cr.ClubName;
+                            row["學年度"] = cr.SchoolYear;
+                            row["學期"] = cr.Semester;
+
+                            row["上課地點"] = cr.Location;
+                            row["社團類型"] = cr.ClubCategory;
+                            row["社團代碼"] = cr.ClubNumber;
+
+                            if (crM.TeacherDic.ContainsKey(cr.RefTeacherID))
+                            {
+                                row["指導老師1"] = crM.TeacherDic[cr.RefTeacherID].Name;
+                            }
+                            if (crM.TeacherDic.ContainsKey(cr.RefTeacherID2))
+                            {
+                                row["指導老師2"] = crM.TeacherDic[cr.RefTeacherID2].Name;
+                            }
+                            if (crM.TeacherDic.ContainsKey(cr.RefTeacherID3))
+                            {
+                                row["指導老師3"] = crM.TeacherDic[cr.RefTeacherID3].Name;
+                            }
+
+                            //row["外聘老師"] = "";
+
+                            row["列印日期"] = DateTime.Today.ToShortDateString();
+                            row["上課開始"] = config[0];
+                            row["上課結束"] = config[config.Count - 1];
+                            row["人數"] = crM.ClubByStudentList[each].Count;
+
+                            for (int x = 1; x <= config.Count; x++)
+                            {
+                                row[string.Format("日期_{0}", x)] = config[x - 1];
+                            }
+                            #endregion
+
+                        }
                     }
                 }
-
                 table.Rows.Add(row);
+
             }
 
             Document PageOne = (Document)Template.Clone(true);
@@ -236,6 +381,8 @@ namespace K12.Club.General
         void BGW_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             btnSave.Enabled = true;
+
+            學生多少個 = 0;
 
             if (e.Cancelled)
             {
